@@ -93,8 +93,10 @@ if low_income_ratio > 20:
 if temp >= 35:
     st.write("✔ 폭염 경보 대응 체계 즉시 가동 필요")
 
+import plotly.express as px
+
 # -----------------------------
-# 간단 시각화
+# 간단 시각화 (확대 가능)
 # -----------------------------
 st.subheader("📊 변수 영향 시각화 (확대/줌 가능)")
 
@@ -121,4 +123,3 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-st.bar_chart(data.set_index("요인"))
