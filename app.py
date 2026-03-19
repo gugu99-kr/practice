@@ -1,125 +1,111 @@
 import streamlit as st
 import pandas as pd
-
-st.set_page_config(page_title="폭염 취약성 분석 앱", layout="wide")
-
-st.title("🌡️ 폭염 취약성 기반 온열질환 위험도 분석")
-st.markdown("체감온도, 사회적 취약성, 정책 변수 기반 간단 시뮬레이션")
-
-# -----------------------------
-# 입력 영역
-# -----------------------------
-st.sidebar.header("📊 입력 변수")
-
-temp = st.sidebar.slider("체감온도 (°C)", 28, 40, 33)
-elderly_ratio = st.sidebar.slider("독거노인 비율 (%)", 0, 50, 20)
-low_income_ratio = st.sidebar.slider("기초생활수급자 비율 (%)", 0, 50, 15)
-shelter_time = st.sidebar.slider("쉼터 접근 시간 (분)", 1, 30, 10)
-care_service = st.sidebar.selectbox("방문 케어 서비스", ["낮음", "높음"])
-
-# -----------------------------
-# 위험도 계산 로직 (간단 모델)
-# -----------------------------
-risk_score = 0
-
-# 체감온도 영향 (티핑포인트 반영)
-if temp < 33:
-    risk_score += 1
-elif temp < 35:
-    risk_score += 3
-else:
-    risk_score += 6  # 임계점 이후 급증
-
-# 사회적 취약성
-risk_score += elderly_ratio * 0.05
-risk_score += low_income_ratio * 0.04
-
-# 접근성 (15분 기준)
-if shelter_time > 15:
-    risk_score += 3
-else:
-    risk_score -= 1
-
-# 방문 케어 효과
-if care_service == "높음":
-    risk_score -= 3
-else:
-    risk_score += 2
-
-# -----------------------------
-# 위험도 레벨 분류
-# -----------------------------
-if risk_score < 5:
-    level = "🟢 낮음"
-elif risk_score < 10:
-    level = "🟡 보통"
-else:
-    level = "🔴 높음"
-
-# -----------------------------
-# 결과 출력
-# -----------------------------
-st.subheader("📈 분석 결과")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.metric("위험 점수", round(risk_score, 2))
-    st.metric("위험 수준", level)
-
-with col2:
-    st.write("### 🔍 해석")
-    if temp >= 35:
-        st.write("- 체감온도 임계점 도달 → 환자 급증 가능")
-    if shelter_time > 15:
-        st.write("- 쉼터 접근성 부족 → 정책 효과 저하")
-    if care_service == "낮음":
-        st.write("- 방문 케어 부족 → 위험 증가")
-
-# -----------------------------
-# 정책 제안
-# -----------------------------
-st.subheader("🧩 맞춤형 정책 제안")
-
-if shelter_time > 15:
-    st.write("✔ 초근거리 마이크로 쉼터 확대 필요")
-
-if care_service == "낮음":
-    st.write("✔ 방문 케어 서비스 강화 필요")
-
-if low_income_ratio > 20:
-    st.write("✔ 에너지 바우처 지원 필요")
-
-if temp >= 35:
-    st.write("✔ 폭염 경보 대응 체계 즉시 가동 필요")
-
+import numpy as np
 import plotly.express as px
 
-# -----------------------------
-# 간단 시각화 (확대 가능)
-# -----------------------------
-st.subheader("📊 변수 영향 시각화 (확대/줌 가능)")
+st.set_page_config(layout="wide")
 
-data = pd.DataFrame({
-    "요인": ["체감온도", "독거노인", "저소득층", "접근성", "방문케어"],
-    "기여도": [
-        temp / 10,
-        elderly_ratio / 10,
-        low_income_ratio / 10,
-        shelter_time / 10,
-        -3 if care_service == "높음" else 2
-    ]
+st.title("🌡️ 폭염 취약성 분석 대시보드")
+
+# -----------------------------
+# 그래프 1: 방문 케어 효과
+# -----------------------------
+st.subheader("📊 그래프 1: 방문 케어 수혜율에 따른 응급실 방문 수")
+
+np.random.seed(42)
+
+# synthetic 데이터 생성
+groups = ["Low", "High"]
+data_g1 = []
+
+for g in groups:
+    for day in range(1, 16):
+        if g == "Low":
+            value = np.random.normal(80, 10)  # 높은 환자 수
+        else:
+            value = np.random.normal(50, 8)   # 낮은 환자 수
+        data_g1.append([g, day, value])
+
+df1 = pd.DataFrame(data_g1, columns=["Group", "Day", "ER_Visits"])
+
+fig1 = px.box(
+    df1,
+    x="Group",
+    y="ER_Visits",
+    color="Group",
+    title="방문 케어 수혜율별 노인 응급실 방문 수 분포",
+    points="all"  # 개별 점 표시
+)
+
+fig1.update_layout(
+    dragmode="zoom"
+)
+
+st.plotly_chart(fig1, use_container_width=True)
+
+st.markdown("""
+👉 해석  
+- High 그룹: 방문 케어 효과로 환자 수 감소  
+- Low 그룹: 대응 부족 → 높은 변동성과 평균  
+""")
+
+# -----------------------------
+# 그래프 2: 접근성 분석
+# -----------------------------
+st.subheader("📊 그래프 2: 쉼터 접근 시간 vs 이용률 & 환자 수")
+
+# synthetic 데이터 생성
+time = np.linspace(1, 30, 50)
+
+utilization = 100 * np.exp(-time / 10)  # 이용률 감소
+er_visits = 20 + time * 3               # 환자 수 증가
+
+df2 = pd.DataFrame({
+    "Access_Time": time,
+    "Utilization": utilization,
+    "ER_Visits": er_visits
 })
 
-fig = px.bar(
-    data,
-    x="요인",
-    y="기여도",
-    title="위험 요인별 기여도"
+# Plotly (이중 축)
+fig2 = px.scatter(
+    df2,
+    x="Access_Time",
+    y="Utilization",
+    title="쉼터 접근성에 따른 이용률 및 온열질환 발생"
 )
 
-fig.update_layout(
-    dragmode="zoom"  # 기본 줌 모드
+# 이용률 선 추가
+fig2.add_scatter(
+    x=df2["Access_Time"],
+    y=df2["Utilization"],
+    mode="lines",
+    name="쉼터 이용률"
 )
 
-st.plotly_chart(fig, use_container_width=True)
+# 환자 수 선 추가 (secondary 느낌)
+fig2.add_scatter(
+    x=df2["Access_Time"],
+    y=df2["ER_Visits"],
+    mode="lines",
+    name="응급실 방문 수",
+    yaxis="y2"
+)
+
+fig2.update_layout(
+    yaxis=dict(title="쉼터 이용률"),
+    yaxis2=dict(
+        title="응급실 방문 수",
+        overlaying="y",
+        side="right"
+    ),
+    dragmode="zoom"
+)
+
+st.plotly_chart(fig2, use_container_width=True)
+
+st.markdown("""
+👉 해석  
+- 접근 시간 증가 → 쉼터 이용률 급감  
+- 동시에 응급실 방문 수 증가  
+- 특히 15분 이후 급격한 악화 구간 존재  
+""")
