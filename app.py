@@ -461,3 +461,24 @@ if show_raw:
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("원본 데이터")
     st.dataframe(filtered, use_container_width=True)
+    
+st.markdown("""
+<style>
+/* metric 카드 전체 */
+div[data-testid="stMetric"] {
+    padding: 8px 12px !important;
+}
+
+/* 제목 (미수거일, 관리부서 등) */
+div[data-testid="stMetricLabel"] {
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+}
+
+/* 값 (전화번호, 날짜 등) */
+div[data-testid="stMetricValue"] {
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+}
+</style>
+""", unsafe_allow_html=True)
