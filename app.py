@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 import pandas as pd
 import streamlit as st
 
@@ -50,22 +51,6 @@ CUSTOM_CSS = """
     margin-bottom: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
-.info-wrap {
-    background: rgba(255,255,255,0.85);
-    border: 1px solid rgba(148,163,184,0.12);
-    border-radius: 22px;
-    padding: 18px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-    margin-top: 12px;
-}
-.small-box {
-    background: rgba(255,255,255,0.86);
-    border-radius: 18px;
-    padding: 16px;
-    border: 1px solid rgba(148,163,184,0.10);
-    min-height: 110px;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-}
 .footer-box {
     background: white;
     border-radius: 22px;
@@ -85,18 +70,35 @@ CUSTOM_CSS = """
     font-size: 0.95rem;
     line-height: 1.7;
 }
-div[data-testid="stMetric"] {
+.today-box {
     background: rgba(255,255,255,0.88);
     border: 1px solid rgba(148,163,184,0.12);
     border-radius: 22px;
-    padding: 10px 12px;
+    padding: 18px;
+    margin-bottom: 16px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+.today-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #0f172a;
 }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"]
+DAY_TO_INDEX = {
+    "월": 0,
+    "화": 1,
+    "수": 2,
+    "목": 3,
+    "금": 4,
+    "토": 5,
+    "일": 6,
+}
+INDEX_TO_DAY = {v: k for k, v in DAY_TO_INDEX.items()}
 
 
 # -----------------------------
@@ -143,6 +145,22 @@ def normalize_day_text(val):
         return " · ".join(found)
 
     return pretty_text(text)
+
+
+def extract_day_list(val):
+    text = safe_text(val)
+    if text == "정보 없음":
+        return []
+
+    raw = text.replace(" ", "")
+    tokens = re.split(r"[+,/·ㆍ\\s]+", raw)
+    tokens = [t for t in tokens if t]
+
+    found = []
+    for d in DAY_ORDER:
+        if d in tokens or d in raw:
+            found.append(d)
+    return found
 
 
 def normalize_time_piece(val):
@@ -196,18 +214,24 @@ def load_data(path: str) -> pd.DataFrame:
 def extract_info(row, kind="생활"):
     kind_map = {
         "생활": {
+            "title": "생활쓰레기",
+            "emoji": "🛍️",
             "method": ["생활쓰레기배출방법", "생활폐기물배출방법"],
             "day": ["생활쓰레기배출요일", "생활폐기물배출요일"],
             "start": ["생활쓰레기배출시작시각", "생활쓰레기배출시작시간"],
             "end": ["생활쓰레기배출종료시각", "생활쓰레기배출종료시간"],
         },
         "음식물": {
+            "title": "음식물",
+            "emoji": "🍎",
             "method": ["음식물쓰레기배출방법", "음식물폐기물배출방법"],
             "day": ["음식물쓰레기배출요일", "음식물폐기물배출요일"],
             "start": ["음식물쓰레기배출시작시각", "음식물쓰레기배출시작시간"],
             "end": ["음식물쓰레기배출종료시각", "음식물쓰레기배출종료시간"],
         },
         "재활용": {
+            "title": "재활용품",
+            "emoji": "♻️",
             "method": ["재활용품배출방법"],
             "day": ["재활용품배출요일"],
             "start": ["재활용품배출시작시각", "재활용품배출시작시간"],
@@ -222,9 +246,14 @@ def extract_info(row, kind="생활"):
     start_col = next((c for c in selected["start"] if c in row.index), None)
     end_col = next((c for c in selected["end"] if c in row.index), None)
 
+    raw_day = row[day_col] if day_col else None
+
     return {
+        "title": selected["title"],
+        "emoji": selected["emoji"],
         "method": pretty_text(row[method_col]) if method_col else "정보 없음",
-        "day": normalize_day_text(row[day_col]) if day_col else "정보 없음",
+        "day": normalize_day_text(raw_day),
+        "day_list": extract_day_list(raw_day),
         "time": normalize_time_text(
             row[start_col] if start_col else None,
             row[end_col] if end_col else None
@@ -232,9 +261,26 @@ def extract_info(row, kind="생활"):
     }
 
 
+def is_collectable_today(day_list):
+    if not day_list:
+        return None
+    today_idx = datetime.now().weekday()  # 월=0, 일=6
+    today_day = INDEX_TO_DAY[today_idx]
+    return today_day in day_list
+
+
 def render_native_card(title, emoji, info, place_type, place):
+    today_flag = is_collectable_today(info["day_list"])
+
     st.markdown(f"### {emoji} {title}")
     st.caption("배출 규칙 안내")
+
+    if today_flag is True:
+        st.success("오늘 배출 가능")
+    elif today_flag is False:
+        st.warning("오늘 배출일 아님")
+    else:
+        st.info("오늘 배출 가능 여부 확인 불가")
 
     st.markdown("**🗓️ 배출 요일**")
     st.write(info["day"])
@@ -308,20 +354,14 @@ st.markdown(
 # 검색 영역
 # -----------------------------
 st.markdown('<div class="search-box">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">검색 조건</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">자치구 선택</div>', unsafe_allow_html=True)
 
-f1, f2, f3 = st.columns([1.2, 1.4, 0.8])
+f1, f2 = st.columns([1.5, 0.5])
 
 with f1:
     selected_gu = st.selectbox("자치구 선택", gu_list)
 
 with f2:
-    keyword = st.text_input(
-        "배출장소/방법 키워드 검색",
-        placeholder="예: 문전수거, 거점배출, 클린하우스"
-    )
-
-with f3:
     show_raw = st.checkbox("원본 데이터 보기", value=False)
 
 st.markdown("</div>", unsafe_allow_html=True)
@@ -331,32 +371,13 @@ st.markdown("</div>", unsafe_allow_html=True)
 # -----------------------------
 filtered = df[df[gu_col].astype(str).str.strip() == selected_gu].copy()
 
-if keyword:
-    search_cols = [c for c in [place_col, place_type_col] if c is not None]
-    waste_method_cols = [
-        c for c in [
-            "생활쓰레기배출방법",
-            "음식물쓰레기배출방법",
-            "재활용품배출방법",
-            "생활폐기물배출방법",
-            "음식물폐기물배출방법"
-        ] if c in filtered.columns
-    ]
-    search_cols += waste_method_cols
-
-    if search_cols:
-        mask = filtered[search_cols].astype(str).apply(
-            lambda row: row.str.contains(keyword.strip(), case=False, na=False)
-        ).any(axis=1)
-        filtered = filtered[mask].copy()
-
 # -----------------------------
 # 본문
 # -----------------------------
 st.subheader(f"📍 {selected_gu} 배출 정보")
 
 if filtered.empty:
-    st.warning("검색 조건에 맞는 데이터가 없습니다.")
+    st.warning("선택한 자치구 데이터가 없습니다.")
     st.stop()
 
 row = filtered.iloc[0]
@@ -368,12 +389,28 @@ life_info = extract_info(row, "생활")
 food_info = extract_info(row, "음식물")
 recycle_info = extract_info(row, "재활용")
 
-# 진단용: True로 바꾸면 HTML이 섞였는지 바로 확인 가능
-DEBUG_MODE = False
-if DEBUG_MODE:
-    st.write("생활:", life_info)
-    st.write("음식물:", food_info)
-    st.write("재활용:", recycle_info)
+today_idx = datetime.now().weekday()
+today_day = INDEX_TO_DAY[today_idx]
+
+today_available = []
+for item in [life_info, food_info, recycle_info]:
+    flag = is_collectable_today(item["day_list"])
+    if flag is True:
+        today_available.append(f'{item["emoji"]} {item["title"]}')
+
+st.markdown(
+    f"""
+    <div class="today-box">
+        <div class="today-title">📅 오늘 요일: {today_day}</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+if today_available:
+    st.success("오늘 배출 가능한 항목: " + ", ".join(today_available))
+else:
+    st.warning("오늘 배출 가능한 항목이 없거나 확인할 수 없습니다.")
 
 c1, c2, c3 = st.columns(3)
 
