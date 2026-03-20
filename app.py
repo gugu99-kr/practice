@@ -198,15 +198,44 @@ def load_geojson_property_name(geojson_path, candidate_props):
 
 
 # =========================
-# 데이터 로드
+# 안전한 CSV 로더
 # =========================
 @st.cache_data
 def load_data(path):
     if not path.exists():
         return None
-    return pd.read_csv(path)
+
+    read_attempts = [
+        {"encoding": "utf-8"},
+        {"encoding": "utf-8-sig"},
+        {"encoding": "cp949"},
+        {"encoding": "euc-kr"},
+        {"encoding": "latin1"},
+        {"encoding": "utf-8", "sep": None, "engine": "python"},
+        {"encoding": "utf-8-sig", "sep": None, "engine": "python"},
+        {"encoding": "cp949", "sep": None, "engine": "python"},
+        {"encoding": "euc-kr", "sep": None, "engine": "python"},
+        {"encoding": "latin1", "sep": None, "engine": "python"},
+    ]
+
+    last_error = None
+
+    for opts in read_attempts:
+        try:
+            df = pd.read_csv(path, on_bad_lines="skip", **opts)
+            df.columns = [str(c).strip() for c in df.columns]
+            return df
+        except Exception as e:
+            last_error = e
+            continue
+
+    st.error(f"CSV 파일을 읽지 못했습니다: {last_error}")
+    st.stop()
 
 
+# =========================
+# 데이터 로드
+# =========================
 df = load_data(DATA_PATH)
 
 if df is None:
@@ -217,7 +246,6 @@ if not GEOJSON_PATH.exists():
     st.error("`seoul_gu.geojson` 파일을 찾을 수 없습니다. app.py와 같은 폴더에 두세요.")
     st.stop()
 
-df.columns = [str(c).strip() for c in df.columns]
 cols = detect_columns(df)
 
 required_minimum = ["location", "volume"]
