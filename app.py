@@ -1,5 +1,4 @@
 import re
-import html
 import pandas as pd
 import streamlit as st
 
@@ -20,13 +19,11 @@ CUSTOM_CSS = """
         radial-gradient(circle at top right, rgba(56, 189, 248, 0.10), transparent 24%),
         linear-gradient(180deg, #eef4ff 0%, #f8fbff 45%, #f5f7fb 100%);
 }
-
 .block-container {
     max-width: 1180px;
     padding-top: 1.4rem;
     padding-bottom: 2rem;
 }
-
 .hero-box {
     background: linear-gradient(135deg, #4f8cff 0%, #79b8ff 100%);
     padding: 28px 32px;
@@ -35,62 +32,32 @@ CUSTOM_CSS = """
     margin-bottom: 20px;
     box-shadow: 0 12px 30px rgba(79, 140, 255, 0.20);
 }
-
 .hero-title {
     font-size: 2rem;
     font-weight: 800;
     margin-bottom: 0.4rem;
 }
-
 .hero-sub {
     font-size: 1rem;
     opacity: 0.95;
     line-height: 1.6;
 }
-
 .search-box {
-    background: rgba(255,255,255,0.76);
+    background: rgba(255,255,255,0.80);
     border: 1px solid rgba(148,163,184,0.12);
     border-radius: 24px;
     padding: 18px;
     margin-bottom: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
-
-.card {
-    background: rgba(255,255,255,0.88);
-    border-radius: 26px;
-    padding: 24px 20px;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    min-height: 340px;
+.info-wrap {
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    margin-top: 12px;
 }
-
-.card-title {
-    font-size: 1.7rem;
-    font-weight: 800;
-    margin-bottom: 18px;
-    color: #0f172a;
-}
-
-.label {
-    font-size: 0.9rem;
-    color: #64748b;
-    margin-top: 14px;
-    margin-bottom: 4px;
-    font-weight: 700;
-}
-
-.value {
-    font-size: 1.02rem;
-    font-weight: 600;
-    color: #111827;
-    line-height: 1.65;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-}
-
 .small-box {
     background: rgba(255,255,255,0.86);
     border-radius: 18px;
@@ -99,7 +66,6 @@ CUSTOM_CSS = """
     min-height: 110px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
-
 .footer-box {
     background: white;
     border-radius: 22px;
@@ -108,18 +74,23 @@ CUSTOM_CSS = """
     border: 1px solid rgba(0,0,0,0.04);
     margin-top: 18px;
 }
-
-.note-text {
-    color: #475467;
-    font-size: 0.95rem;
-    line-height: 1.7;
-}
-
 .section-title {
     font-size: 1.2rem;
     font-weight: 800;
     margin-bottom: 8px;
     color: #0f172a;
+}
+.note-text {
+    color: #475467;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+div[data-testid="stMetric"] {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 22px;
+    padding: 10px 12px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 </style>
 """
@@ -179,8 +150,6 @@ def normalize_time_piece(val):
     if text == "정보 없음":
         return text
 
-    text = str(text).strip()
-
     if re.fullmatch(r"\d{4}", text):
         return f"{text[:2]}:{text[2:]}"
     if re.fullmatch(r"\d{1,2}", text):
@@ -208,15 +177,11 @@ def find_column(df, candidates):
     return None
 
 
-def esc(val):
-    return html.escape(str(val))
-
-
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
     encodings = ["cp949", "utf-8-sig", "utf-8", "euc-kr"]
-
     last_error = None
+
     for enc in encodings:
         try:
             df = pd.read_csv(path, encoding=enc)
@@ -257,50 +222,34 @@ def extract_info(row, kind="생활"):
     start_col = next((c for c in selected["start"] if c in row.index), None)
     end_col = next((c for c in selected["end"] if c in row.index), None)
 
-    method = pretty_text(row[method_col]) if method_col else "정보 없음"
-    day = normalize_day_text(row[day_col]) if day_col else "정보 없음"
-    time_text = normalize_time_text(
-        row[start_col] if start_col else None,
-        row[end_col] if end_col else None
-    )
-
     return {
-        "method": method,
-        "day": day,
-        "time": time_text
+        "method": pretty_text(row[method_col]) if method_col else "정보 없음",
+        "day": normalize_day_text(row[day_col]) if day_col else "정보 없음",
+        "time": normalize_time_text(
+            row[start_col] if start_col else None,
+            row[end_col] if end_col else None
+        )
     }
 
 
-def render_card(title, emoji, info, place_type, place):
-    title = esc(title)
-    emoji = esc(emoji)
-    day = esc(info.get("day", "정보 없음"))
-    time_val = esc(info.get("time", "정보 없음"))
-    method = esc(info.get("method", "정보 없음"))
-    place_type = esc(place_type)
-    place = esc(place)
+def render_native_card(title, emoji, info, place_type, place):
+    st.markdown(f"### {emoji} {title}")
+    st.caption("배출 규칙 안내")
 
-    card_html = f"""
-    <div class="card">
-        <div class="card-title">{emoji} {title}</div>
+    st.markdown("**🗓️ 배출 요일**")
+    st.write(info["day"])
 
-        <div class="label">🗓️ 배출 요일</div>
-        <div class="value">{day}</div>
+    st.markdown("**⏰ 배출 시간**")
+    st.write(info["time"])
 
-        <div class="label">⏰ 배출 시간</div>
-        <div class="value">{time_val}</div>
+    st.markdown("**📝 배출 방법**")
+    st.write(info["method"])
 
-        <div class="label">📝 배출 방법</div>
-        <div class="value">{method}</div>
+    st.markdown("**📍 배출 장소 유형**")
+    st.write(place_type)
 
-        <div class="label">📍 배출 장소 유형</div>
-        <div class="value">{place_type}</div>
-
-        <div class="label">🏠 상세 장소</div>
-        <div class="value">{place}</div>
-    </div>
-    """
-    st.markdown(card_html, unsafe_allow_html=True)
+    st.markdown("**🏠 상세 장소**")
+    st.write(place)
 
 
 # -----------------------------
@@ -315,7 +264,6 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# 주요 컬럼 찾기
 gu_col = find_column(df, ["시군구명", "자치구명", "구명"])
 sido_col = find_column(df, ["시도명"])
 place_type_col = find_column(df, ["배출장소유형"])
@@ -327,18 +275,17 @@ date_col = find_column(df, ["데이터기준일자"])
 updated_col = find_column(df, ["최종수정시점"])
 
 if gu_col is None:
-    st.error("`시군구명` 컬럼을 찾지 못했습니다. CSV 컬럼명을 확인해주세요.")
+    st.error("`시군구명` 컬럼을 찾지 못했습니다.")
     st.write("현재 컬럼 목록:", list(df.columns))
     st.stop()
 
-# 서울 데이터만 남기기
 if sido_col and sido_col in df.columns:
     df = df[df[sido_col].astype(str).str.contains("서울", na=False)].copy()
 
 gu_list = sorted(df[gu_col].dropna().astype(str).str.strip().unique().tolist())
 
 if not gu_list:
-    st.error("구 목록을 불러오지 못했습니다. 데이터 내용을 확인해주세요.")
+    st.error("구 목록을 불러오지 못했습니다.")
     st.stop()
 
 # -----------------------------
@@ -385,7 +332,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 filtered = df[df[gu_col].astype(str).str.strip() == selected_gu].copy()
 
 if keyword:
-    keyword = keyword.strip()
     search_cols = [c for c in [place_col, place_type_col] if c is not None]
     waste_method_cols = [
         c for c in [
@@ -400,7 +346,7 @@ if keyword:
 
     if search_cols:
         mask = filtered[search_cols].astype(str).apply(
-            lambda row: row.str.contains(keyword, case=False, na=False)
+            lambda row: row.str.contains(keyword.strip(), case=False, na=False)
         ).any(axis=1)
         filtered = filtered[mask].copy()
 
@@ -413,9 +359,6 @@ if filtered.empty:
     st.warning("검색 조건에 맞는 데이터가 없습니다.")
     st.stop()
 
-# 디버깅 필요하면 잠깐 True로 바꾸기
-DEBUG_MODE = False
-
 row = filtered.iloc[0]
 
 place_type = pretty_text(row[place_type_col]) if place_type_col else "정보 없음"
@@ -425,6 +368,8 @@ life_info = extract_info(row, "생활")
 food_info = extract_info(row, "음식물")
 recycle_info = extract_info(row, "재활용")
 
+# 진단용: True로 바꾸면 HTML이 섞였는지 바로 확인 가능
+DEBUG_MODE = False
 if DEBUG_MODE:
     st.write("생활:", life_info)
     st.write("음식물:", food_info)
@@ -433,70 +378,35 @@ if DEBUG_MODE:
 c1, c2, c3 = st.columns(3)
 
 with c1:
-    render_card("생활쓰레기", "🛍️", life_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("생활쓰레기", "🛍️", life_info, place_type, place)
 
 with c2:
-    render_card("음식물", "🍎", food_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("음식물", "🍎", food_info, place_type, place)
 
 with c3:
-    render_card("재활용품", "♻️", recycle_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("재활용품", "♻️", recycle_info, place_type, place)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# -----------------------------
-# 추가 정보
-# -----------------------------
 a, b, c, d = st.columns(4)
 
 with a:
-    st.markdown(
-        f"""
-        <div class="small-box">
-            <div class="label">미수거일</div>
-            <div class="value">{esc(pretty_text(row[nocollect_col]) if nocollect_col else "정보 없음")}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("미수거일", pretty_text(row[nocollect_col]) if nocollect_col else "정보 없음")
 
 with b:
-    st.markdown(
-        f"""
-        <div class="small-box">
-            <div class="label">관리부서</div>
-            <div class="value">{esc(pretty_text(row[dept_col]) if dept_col else "정보 없음")}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("관리부서", pretty_text(row[dept_col]) if dept_col else "정보 없음")
 
 with c:
-    st.markdown(
-        f"""
-        <div class="small-box">
-            <div class="label">전화번호</div>
-            <div class="value">{esc(pretty_text(row[phone_col]) if phone_col else "정보 없음")}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("전화번호", pretty_text(row[phone_col]) if phone_col else "정보 없음")
 
 with d:
     base_date = pretty_text(row[date_col]) if date_col else "정보 없음"
     updated_date = pretty_text(row[updated_col]) if updated_col else "정보 없음"
-    st.markdown(
-        f"""
-        <div class="small-box">
-            <div class="label">기준일 / 수정일</div>
-            <div class="value">{esc(base_date)}<br>{esc(updated_date)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.metric("기준일 / 수정일", f"{base_date} / {updated_date}")
 
-# -----------------------------
-# 안내 문구
-# -----------------------------
 st.markdown(
     """
     <div class="footer-box">
@@ -510,9 +420,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# -----------------------------
-# 원본 데이터
-# -----------------------------
 if show_raw:
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("원본 데이터")
