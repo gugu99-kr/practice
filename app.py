@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 import streamlit as st
 
@@ -43,7 +44,7 @@ CUSTOM_CSS = """
     padding: 22px 20px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     border: 1px solid rgba(0,0,0,0.04);
-    min-height: 280px;
+    min-height: 320px;
 }
 .card-title {
     font-size: 1.25rem;
@@ -61,12 +62,15 @@ CUSTOM_CSS = """
     font-weight: 600;
     color: #111827;
     line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 .small-box {
     background: rgba(255,255,255,0.75);
     border-radius: 18px;
     padding: 14px 16px;
     border: 1px solid rgba(0,0,0,0.04);
+    min-height: 110px;
 }
 .footer-box {
     background: white;
@@ -83,6 +87,8 @@ CUSTOM_CSS = """
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"]
+
 
 # -----------------------------
 # 유틸 함수
@@ -95,6 +101,24 @@ def safe_text(val):
     return text if text else "정보 없음"
 
 
+def pretty_text(text):
+    """출력용 텍스트 정리"""
+    text = safe_text(text)
+    if text == "정보 없음":
+        return text
+
+    # 띄어쓰기 및 기호 정리
+    text = re.sub(r"\s+", " ", text).strip()
+    text = text.replace(" ,", ",")
+    text = text.replace(" + ", " · ")
+    text = text.replace("+", " · ")
+    text = text.replace("건물앞", "건물 앞")
+    text = text.replace("점포앞", "점포 앞")
+    text = text.replace("대문앞", "대문 앞")
+
+    return text
+
+
 def find_column(df, candidates):
     """후보 컬럼명 중 실제 존재하는 컬럼 반환"""
     normalized = {str(col).strip(): col for col in df.columns}
@@ -102,6 +126,77 @@ def find_column(df, candidates):
         if cand in normalized:
             return normalized[cand]
     return None
+
+
+def normalize_day_text(text):
+    """요일 문자열 정리: 중복 제거 + 월~일 순서 정렬"""
+    if pd.isna(text):
+        return "정보 없음"
+
+    s = str(text).strip()
+    if not s:
+        return "정보 없음"
+
+    # 불필요 공백 제거
+    s = s.replace(" ", "")
+
+    # 구분자 기준 분리
+    tokens = re.split(r"[+,/·ㆍ\s]+", s)
+    tokens = [t for t in tokens if t]
+
+    found = []
+    for day in DAY_ORDER:
+        if day in tokens or day in s:
+            found.append(day)
+
+    if found:
+        return " · ".join(found)
+
+    return pretty_text(s)
+
+
+def normalize_time_piece(value):
+    """시간 한 조각 정리"""
+    text = safe_text(value)
+    if text == "정보 없음":
+        return text
+
+    text = str(text).strip()
+
+    # 1800, 0900 형태 대응
+    if re.fullmatch(r"\d{4}", text):
+        return f"{text[:2]}:{text[2:]}"
+    # 18 형태 대응
+    if re.fullmatch(r"\d{1,2}", text):
+        return f"{int(text):02d}:00"
+
+    return text
+
+
+def normalize_time_text(start, end):
+    """시간 문자열 정리"""
+    start = normalize_time_piece(start)
+    end = normalize_time_piece(end)
+
+    if start == "정보 없음" and end == "정보 없음":
+        return "정보 없음"
+    if start != "정보 없음" and end != "정보 없음":
+        return f"{start} ~ {end}"
+    return start if start != "정보 없음" else end
+
+
+def merge_unique_values(series):
+    """여러 행의 값을 중복 제거 후 합치기"""
+    values = []
+    for v in series.dropna():
+        t = str(v).strip()
+        if t and t not in values:
+            values.append(t)
+
+    if not values:
+        return "정보 없음"
+
+    return " / ".join(values)
 
 
 @st.cache_data
@@ -158,17 +253,13 @@ def extract_info(row, kind="생활"):
     start_col = next((c for c in selected["start"] if c in row.index), None)
     end_col = next((c for c in selected["end"] if c in row.index), None)
 
-    method = safe_text(row[method_col]) if method_col else "정보 없음"
-    day = safe_text(row[day_col]) if day_col else "정보 없음"
-    start = safe_text(row[start_col]) if start_col else "정보 없음"
-    end = safe_text(row[end_col]) if end_col else "정보 없음"
+    method = pretty_text(row[method_col]) if method_col else "정보 없음"
+    day_raw = row[day_col] if day_col else None
+    start_raw = row[start_col] if start_col else None
+    end_raw = row[end_col] if end_col else None
 
-    if start == "정보 없음" and end == "정보 없음":
-        time_text = "정보 없음"
-    elif start != "정보 없음" and end != "정보 없음":
-        time_text = f"{start} ~ {end}"
-    else:
-        time_text = start if start != "정보 없음" else end
+    day = normalize_day_text(day_raw)
+    time_text = normalize_time_text(start_raw, end_raw)
 
     return {
         "method": method,
@@ -235,6 +326,11 @@ if gu_col is None:
 if sido_col and sido_col in df.columns:
     df = df[df[sido_col].astype(str).str.contains("서울", na=False)].copy()
 
+# 문자열 정리
+for col in df.columns:
+    if df[col].dtype == "object":
+        df[col] = df[col].astype(str).str.strip()
+
 # 구 리스트
 gu_list = sorted(df[gu_col].dropna().astype(str).str.strip().unique().tolist())
 
@@ -264,7 +360,11 @@ with st.sidebar:
     st.header("검색 조건")
     selected_gu = st.selectbox("자치구 선택", gu_list)
 
-    keyword = st.text_input("배출장소/방법 키워드 검색", placeholder="예: 문전수거, 거점배출, 클린하우스")
+    keyword = st.text_input(
+        "배출장소/방법 키워드 검색",
+        placeholder="예: 문전수거, 거점배출, 클린하우스"
+    )
+
     show_raw = st.checkbox("원본 데이터 보기", value=False)
 
 # 선택 구 필터
@@ -303,8 +403,8 @@ if filtered.empty:
 # 첫 행 대표값 사용
 row = filtered.iloc[0]
 
-place_type = safe_text(row[place_type_col]) if place_type_col else "정보 없음"
-place = safe_text(row[place_col]) if place_col else "정보 없음"
+place_type = pretty_text(row[place_type_col]) if place_type_col else "정보 없음"
+place = pretty_text(row[place_col]) if place_col else "정보 없음"
 
 life_info = extract_info(row, "생활")
 food_info = extract_info(row, "음식물")
@@ -331,7 +431,7 @@ with col_a:
         f"""
         <div class="small-box">
             <div class="label">미수거일</div>
-            <div class="value">{safe_text(row[nocollect_col]) if nocollect_col else "정보 없음"}</div>
+            <div class="value">{pretty_text(row[nocollect_col]) if nocollect_col else "정보 없음"}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -342,7 +442,7 @@ with col_b:
         f"""
         <div class="small-box">
             <div class="label">관리부서</div>
-            <div class="value">{safe_text(row[dept_col]) if dept_col else "정보 없음"}</div>
+            <div class="value">{pretty_text(row[dept_col]) if dept_col else "정보 없음"}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -353,15 +453,15 @@ with col_c:
         f"""
         <div class="small-box">
             <div class="label">전화번호</div>
-            <div class="value">{safe_text(row[phone_col]) if phone_col else "정보 없음"}</div>
+            <div class="value">{pretty_text(row[phone_col]) if phone_col else "정보 없음"}</div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
 with col_d:
-    base_date = safe_text(row[date_col]) if date_col else "정보 없음"
-    updated_date = safe_text(row[updated_col]) if updated_col else "정보 없음"
+    base_date = pretty_text(row[date_col]) if date_col else "정보 없음"
+    updated_date = pretty_text(row[updated_col]) if updated_col else "정보 없음"
     st.markdown(
         f"""
         <div class="small-box">
@@ -374,7 +474,45 @@ with col_d:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 안내 문구
+# 같은 구에 데이터가 여러 행일 때 참고 정보
+if len(filtered) > 1:
+    st.subheader("📋 같은 자치구의 추가 배출 정보")
+
+    preview_cols = [gu_col]
+    for c in [
+        place_type_col,
+        place_col,
+        "생활쓰레기배출요일",
+        "음식물쓰레기배출요일",
+        "재활용품배출요일",
+        "생활쓰레기배출방법",
+        "음식물쓰레기배출방법",
+        "재활용품배출방법",
+    ]:
+        if c is not None and c in filtered.columns and c not in preview_cols:
+            preview_cols.append(c)
+
+    preview_df = filtered[preview_cols].copy()
+
+    rename_map = {
+        gu_col: "자치구",
+        place_type_col: "배출장소유형" if place_type_col else "",
+        place_col: "배출장소" if place_col else "",
+        "생활쓰레기배출요일": "생활요일",
+        "음식물쓰레기배출요일": "음식물요일",
+        "재활용품배출요일": "재활용요일",
+        "생활쓰레기배출방법": "생활방법",
+        "음식물쓰레기배출방법": "음식물방법",
+        "재활용품배출방법": "재활용방법",
+    }
+
+    preview_df = preview_df.rename(columns=rename_map)
+
+    for col in preview_df.columns:
+        preview_df[col] = preview_df[col].apply(pretty_text)
+
+    st.dataframe(preview_df, use_container_width=True)
+
 st.markdown(
     """
     <div class="footer-box">
