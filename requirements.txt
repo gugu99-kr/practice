@@ -1,6 +1,2 @@
-streamlit
-pandas
-folium
-streamlit-folium
-openpyxl
-requests
+pip install -r requirements.txt
+streamlit run app.py
