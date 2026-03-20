@@ -18,262 +18,71 @@ CUSTOM_CSS = """
     background:
         radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 22%),
         radial-gradient(circle at top right, rgba(56, 189, 248, 0.10), transparent 24%),
-        linear-gradient(180deg, #eaf2ff 0%, #f7fbff 42%, #f4f7fb 100%);
+        linear-gradient(180deg, #eef4ff 0%, #f8fbff 45%, #f5f7fb 100%);
 }
-
 .block-container {
     max-width: 1180px;
-    padding-top: 1.3rem;
-    padding-bottom: 2.2rem;
+    padding-top: 1.4rem;
+    padding-bottom: 2rem;
 }
-
-/* 상단 히어로 */
 .hero-box {
-    background:
-        linear-gradient(135deg, rgba(79, 140, 255, 0.95) 0%, rgba(110, 177, 255, 0.92) 55%, rgba(61, 132, 247, 0.92) 100%);
-    padding: 30px 32px;
-    border-radius: 30px;
+    background: linear-gradient(135deg, #4f8cff 0%, #79b8ff 100%);
+    padding: 28px 32px;
+    border-radius: 28px;
     color: white;
     margin-bottom: 20px;
-    box-shadow: 0 16px 36px rgba(79, 140, 255, 0.22);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(79, 140, 255, 0.20);
 }
-
-.hero-box::after {
-    content: "";
-    position: absolute;
-    right: -30px;
-    top: -30px;
-    width: 170px;
-    height: 170px;
-    background: rgba(255,255,255,0.10);
-    border-radius: 50%;
-}
-
 .hero-title {
     font-size: 2rem;
     font-weight: 800;
-    margin-bottom: 0.45rem;
-    position: relative;
-    z-index: 1;
+    margin-bottom: 0.4rem;
 }
-
 .hero-sub {
     font-size: 1rem;
-    opacity: 0.96;
-    line-height: 1.65;
-    position: relative;
-    z-index: 1;
+    opacity: 0.95;
+    line-height: 1.6;
 }
-
-/* 검색 패널 */
 .search-box {
-    background: rgba(255,255,255,0.74);
-    border: 1px solid rgba(148,163,184,0.14);
-    border-radius: 26px;
+    background: rgba(255,255,255,0.80);
+    border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 24px;
     padding: 18px;
     margin-bottom: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
 }
-
-.section-title {
-    font-size: 1.15rem;
-    font-weight: 800;
-    margin-bottom: 10px;
-    color: #0f172a;
-}
-
-/* 오늘 정보 패널 */
-.today-box {
-    background: rgba(255,255,255,0.80);
-    border: 1px solid rgba(148,163,184,0.14);
-    border-radius: 24px;
-    padding: 18px;
-    margin-bottom: 16px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
-.today-title {
-    font-size: 1.08rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-
-.today-sub {
-    font-size: 0.95rem;
-    color: #64748b;
-}
-
-/* 쓰레기 정보 카드 */
-div[data-testid="stVerticalBlock"] div[data-testid="stContainer"] {
-    border-radius: 24px;
-}
-
-.waste-card {
-    background: rgba(255,255,255,0.88);
-    border: 1px solid rgba(148,163,184,0.12);
-    border-radius: 26px;
-    padding: 22px 20px;
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    min-height: 360px;
-}
-
-.waste-card-title {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-
-.waste-card-sub {
-    font-size: 0.9rem;
-    color: #64748b;
-    margin-bottom: 14px;
-}
-
-.waste-label {
-    font-size: 0.84rem;
-    color: #64748b;
-    font-weight: 700;
-    margin-top: 14px;
-    margin-bottom: 4px;
-}
-
-.waste-value {
-    font-size: 1rem;
-    color: #111827;
-    font-weight: 600;
-    line-height: 1.65;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-.badge-ok {
-    display: inline-block;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: rgba(34, 197, 94, 0.12);
-    color: #166534;
-    font-size: 0.88rem;
-    font-weight: 800;
-    border: 1px solid rgba(34, 197, 94, 0.16);
-    margin-bottom: 6px;
-}
-
-.badge-no {
-    display: inline-block;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: rgba(245, 158, 11, 0.14);
-    color: #92400e;
-    font-size: 0.88rem;
-    font-weight: 800;
-    border: 1px solid rgba(245, 158, 11, 0.18);
-    margin-bottom: 6px;
-}
-
-.badge-unknown {
-    display: inline-block;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: rgba(148, 163, 184, 0.16);
-    color: #475569;
-    font-size: 0.88rem;
-    font-weight: 800;
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    margin-bottom: 6px;
-}
-
-/* 아이폰 날씨앱 느낌 하단 카드 */
-.glass-wrap {
-    margin-top: 18px;
-    margin-bottom: 8px;
-}
-
-.glass-card {
-    background: linear-gradient(
-        180deg,
-        rgba(255,255,255,0.45) 0%,
-        rgba(255,255,255,0.22) 100%
-    );
-    border: 1px solid rgba(255,255,255,0.34);
-    border-radius: 26px;
-    padding: 18px;
-    min-height: 128px;
-    box-shadow:
-        0 10px 30px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255,255,255,0.45);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-}
-
-.glass-label {
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: #64748b;
-    font-weight: 800;
-    margin-bottom: 10px;
-}
-
-.glass-value {
-    font-size: 1.05rem;
-    line-height: 1.45;
-    color: #0f172a;
-    font-weight: 700;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-}
-
-.glass-sub {
-    font-size: 0.88rem;
-    color: #64748b;
-    margin-top: 8px;
-    line-height: 1.45;
-}
-
-/* 하단 안내 */
 .footer-box {
-    background: rgba(255,255,255,0.82);
-    border-radius: 24px;
+    background: white;
+    border-radius: 22px;
     padding: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
     border: 1px solid rgba(0,0,0,0.04);
     margin-top: 18px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
-
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #0f172a;
+}
 .note-text {
     color: #475467;
     font-size: 0.95rem;
     line-height: 1.7;
 }
-
-/* input 모양 */
-div[data-testid="stSelectbox"] > div {
-    border-radius: 16px !important;
+.today-box {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 22px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
-
-@media (max-width: 900px) {
-    .hero-title {
-        font-size: 1.7rem;
-    }
-    .waste-card {
-        min-height: auto;
-    }
-    .glass-card {
-        min-height: 110px;
-    }
+.today-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #0f172a;
 }
 </style>
 """
@@ -351,7 +160,6 @@ def extract_day_list(val):
     for d in DAY_ORDER:
         if d in tokens or d in raw:
             found.append(d)
-
     return found
 
 
@@ -456,58 +264,38 @@ def extract_info(row, kind="생활"):
 def is_collectable_today(day_list):
     if not day_list:
         return None
-    today_idx = datetime.now().weekday()
+    today_idx = datetime.now().weekday()  # 월=0, 일=6
     today_day = INDEX_TO_DAY[today_idx]
     return today_day in day_list
-
-
-def render_status_badge(flag):
-    if flag is True:
-        st.markdown('<div class="badge-ok">오늘 배출 가능</div>', unsafe_allow_html=True)
-    elif flag is False:
-        st.markdown('<div class="badge-no">오늘 배출일 아님</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="badge-unknown">확인 불가</div>', unsafe_allow_html=True)
 
 
 def render_native_card(title, emoji, info, place_type, place):
     today_flag = is_collectable_today(info["day_list"])
 
-    st.markdown('<div class="waste-card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-card-title">{emoji} {title}</div>', unsafe_allow_html=True)
-    st.markdown('<div class="waste-card-sub">배출 규칙 안내</div>', unsafe_allow_html=True)
+    st.markdown(f"### {emoji} {title}")
+    st.caption("배출 규칙 안내")
 
-    render_status_badge(today_flag)
+    if today_flag is True:
+        st.success("오늘 배출 가능")
+    elif today_flag is False:
+        st.warning("오늘 배출일 아님")
+    else:
+        st.info("오늘 배출 가능 여부 확인 불가")
 
-    st.markdown('<div class="waste-label">🗓️ 배출 요일</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-value">{info["day"]}</div>', unsafe_allow_html=True)
+    st.markdown("**🗓️ 배출 요일**")
+    st.write(info["day"])
 
-    st.markdown('<div class="waste-label">⏰ 배출 시간</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-value">{info["time"]}</div>', unsafe_allow_html=True)
+    st.markdown("**⏰ 배출 시간**")
+    st.write(info["time"])
 
-    st.markdown('<div class="waste-label">📝 배출 방법</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-value">{info["method"]}</div>', unsafe_allow_html=True)
+    st.markdown("**📝 배출 방법**")
+    st.write(info["method"])
 
-    st.markdown('<div class="waste-label">📍 배출 장소 유형</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-value">{place_type}</div>', unsafe_allow_html=True)
+    st.markdown("**📍 배출 장소 유형**")
+    st.write(place_type)
 
-    st.markdown('<div class="waste-label">🏠 상세 장소</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="waste-value">{place}</div>', unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def render_glass_info_card(label, value, sub_text=""):
-    st.markdown(
-        f"""
-        <div class="glass-card">
-            <div class="glass-label">{label}</div>
-            <div class="glass-value">{value}</div>
-            <div class="glass-sub">{sub_text}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("**🏠 상세 장소**")
+    st.write(place)
 
 
 # -----------------------------
@@ -614,7 +402,6 @@ st.markdown(
     f"""
     <div class="today-box">
         <div class="today-title">📅 오늘 요일: {today_day}</div>
-        <div class="today-sub">선택한 자치구의 배출 가능 항목을 확인합니다.</div>
     </div>
     """,
     unsafe_allow_html=True
@@ -628,60 +415,35 @@ else:
 c1, c2, c3 = st.columns(3)
 
 with c1:
-    render_native_card("생활쓰레기", "🛍️", life_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("생활쓰레기", "🛍️", life_info, place_type, place)
 
 with c2:
-    render_native_card("음식물", "🍎", food_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("음식물", "🍎", food_info, place_type, place)
 
 with c3:
-    render_native_card("재활용품", "♻️", recycle_info, place_type, place)
+    with st.container(border=True):
+        render_native_card("재활용품", "♻️", recycle_info, place_type, place)
 
-# -----------------------------
-# 하단 정보 카드
-# -----------------------------
-st.markdown('<div class="glass-wrap">', unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
-g1, g2, g3, g4 = st.columns(4)
+a, b, c, d = st.columns(4)
 
-nocollect_val = pretty_text(row[nocollect_col]) if nocollect_col else "정보 없음"
-dept_val = pretty_text(row[dept_col]) if dept_col else "정보 없음"
-phone_val = pretty_text(row[phone_col]) if phone_col else "정보 없음"
-base_date = pretty_text(row[date_col]) if date_col else "정보 없음"
-updated_date = pretty_text(row[updated_col]) if updated_col else "정보 없음"
+with a:
+    st.metric("미수거일", pretty_text(row[nocollect_col]) if nocollect_col else "정보 없음")
 
-with g1:
-    render_glass_info_card(
-        "미수거일",
-        nocollect_val,
-        "공휴일 또는 자치구 사정에 따라 변동될 수 있어요"
-    )
+with b:
+    st.metric("관리부서", pretty_text(row[dept_col]) if dept_col else "정보 없음")
 
-with g2:
-    render_glass_info_card(
-        "관리부서",
-        dept_val,
-        "자세한 배출 기준은 담당 부서 안내를 확인하세요"
-    )
+with c:
+    st.metric("전화번호", pretty_text(row[phone_col]) if phone_col else "정보 없음")
 
-with g3:
-    render_glass_info_card(
-        "전화번호",
-        phone_val,
-        "문의가 필요할 때 바로 확인할 수 있어요"
-    )
+with d:
+    base_date = pretty_text(row[date_col]) if date_col else "정보 없음"
+    updated_date = pretty_text(row[updated_col]) if updated_col else "정보 없음"
+    st.metric("기준일 / 수정일", f"{base_date} / {updated_date}")
 
-with g4:
-    render_glass_info_card(
-        "기준일 / 수정일",
-        f"{base_date}<br>{updated_date}",
-        "데이터 최신 여부를 함께 확인하세요"
-    )
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-# -----------------------------
-# 안내 문구
-# -----------------------------
 st.markdown(
     """
     <div class="footer-box">
@@ -695,9 +457,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# -----------------------------
-# 원본 데이터
-# -----------------------------
 if show_raw:
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("원본 데이터")
