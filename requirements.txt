@@ -1,5 +1,6 @@
 streamlit
 pandas
-numpy
-plotly
-statsmodels
+folium
+streamlit-folium
+openpyxl
+requests
